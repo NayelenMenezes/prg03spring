@@ -1,6 +1,5 @@
 package br.com.ifba;
 
-import br.com.ifba.curso.controller.CursoIController;
 import br.com.ifba.curso.view.CursoListar;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

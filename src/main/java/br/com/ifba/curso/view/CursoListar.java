@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class CursoListar extends javax.swing.JFrame {
     
 private final CursoIController cursoController;
-private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CursoListar.class.getName());
  
     public CursoListar(CursoIController cursoController) {
         this.cursoController = cursoController;

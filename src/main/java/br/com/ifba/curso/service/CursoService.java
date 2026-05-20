@@ -1,11 +1,12 @@
 package br.com.ifba.curso.service;
 
-import br.com.ifba.curso.dao.CursoIDao;
 import br.com.ifba.curso.entity.Curso;
+import br.com.ifba.curso.repository.CursoRepository;
 import br.com.ifba.infrastruture.util.StringUtil;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementação da camada de serviço para gerenciamento de Cursos.
@@ -15,38 +16,38 @@ import org.springframework.stereotype.Service;
 @Service
 public class CursoService implements CursoIService {
 
-    // O Spring se encarrega de injetar a instância correta do DAO aqui
-    private final CursoIDao cursoDao;
+    // Substituímos o antigo CursoIDao pelo CursoRepository
+    private final CursoRepository cursoRepository;
 
     // A anotação @Autowired no construtor faz a Injeção de Dependência automática do Bean de DAO
     @Autowired
-    public CursoService(CursoIDao cursoDao) {
-        this.cursoDao = cursoDao;
+    public CursoService(CursoRepository cursoRepository) {
+        this.cursoRepository = cursoRepository;
     }
     
     @Override
+    @Transactional
     public void save(Curso curso) {
         // Regra de negócio: impede que um curso seja salvo sem nome
         if (StringUtil.isEmpty(curso.getNome())){
             throw new RuntimeException("O nome do curso não pode estar vazio!");
         }
-        cursoDao.save(curso);
+        cursoRepository.save(curso);
     }
 
     @Override
+    @Transactional
     public void update(Curso curso) {
         // Atualiza os dados utilizando o ecossistema do Spring
-        cursoDao.update(curso);
+        cursoRepository.save(curso);
     }
 
     @Override
+    @Transactional
     public void delete(Long id) throws Exception {
         try {
-            // Cria uma instância temporária apenas com o ID para enviar ao DAO de deleção
-            Curso curso = new Curso();
-            curso.setId(id);
-            
-            cursoDao.delete(curso);
+            //JpaRepository deleta direto pelo ID, sem precisar do objeto temporário
+            cursoRepository.deleteById(id);
         } catch (Exception e) {
             // Captura qualquer erro de banco e relança com uma mensagem amigável
             throw new Exception("Erro técnico ao remover: " + e.getMessage());
@@ -54,23 +55,26 @@ public class CursoService implements CursoIService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Curso> findAll() {
-        // Repassa a busca de listagem completa para o DAO
-        return cursoDao.findAll();
+        // Busca tudo usando o método nativo do Spring Data
+        return cursoRepository.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Curso> findByNomeOrDescricao(String termo) {
         // Busca personalizada repassada ao DAO
-        return cursoDao.findByNomeOrDescricao(termo);
+        return cursoRepository.findByNomeContainingIgnoreCaseOrDescricaoContainingIgnoreCase(termo, termo);
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<Curso> findByText(String termo) throws Exception {
         // Regra de negócio: se o termo for muito curto, traz tudo para evitar buscas ineficientes
         if (termo.length() < 2) {
-            return cursoDao.findAll(); 
+            return cursoRepository.findAll(); 
         }
-        return cursoDao.findByNomeOrDescricao(termo);
+        return cursoRepository.findByNomeContainingIgnoreCaseOrDescricaoContainingIgnoreCase(termo, termo);
     }
 }
